@@ -1,0 +1,21 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.ipynb_checkpoints/
+
+# Variables de entorno locales
+.env
+
+# Datos generados localmente
+data/
+*.log
+
+# Modelos entrenados (se regeneran con el script de entrenamiento)
+ml/modelos/*.joblib
+
+# Sistema operativo / editores
+.DS_Store
+.idea/
+.vscode/

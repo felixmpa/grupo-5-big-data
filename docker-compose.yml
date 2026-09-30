@@ -1,0 +1,11 @@
+# Stack del proyecto IoT + Big Data.
+# Cada PR agrega aquí los servicios de su componente.
+name: iot-bigdata
+
+services: {}
+
+# Red compartida para que los servicios se encuentren por nombre
+# (por ejemplo: mosquitto, kafka, influxdb).
+networks:
+  default:
+    name: iot-net
