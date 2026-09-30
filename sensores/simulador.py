@@ -77,7 +77,9 @@ class Maquina:
 
 
 def conectar():
-    cliente = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2, client_id="simulador-sensores")
+    # Sin client_id fijo: paho genera uno aleatorio y se pueden correr
+    # varios simuladores a la vez (por ejemplo, uno local y otro en Docker).
+    cliente = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2)
     while True:
         try:
             cliente.connect(MQTT_HOST, MQTT_PORT)

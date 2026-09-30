@@ -1,8 +1,13 @@
 FROM python:3.12-slim
+RUN pip install --no-cache-dir uv==0.8.*
 
 WORKDIR /app
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+
+# Instala las versiones exactas de uv.lock (igual que en local).
+COPY pyproject.toml uv.lock ./
+RUN uv sync --frozen --no-dev
+ENV PATH="/app/.venv/bin:$PATH"
+
 COPY simulador.py .
 
 # -u: muestra los prints en los logs sin esperar al buffer

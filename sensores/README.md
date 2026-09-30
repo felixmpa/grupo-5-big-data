@@ -70,12 +70,17 @@ docker compose logs -f sensores
 
 Para ver fallas más seguido: `PROB_DEGRADACION: 0.05` en `docker-compose.yml`.
 
-Sin Docker (con Mosquitto corriendo en tu máquina):
+### Correrlo local con uv
+
+Las dependencias se manejan con [uv](https://docs.astral.sh/uv/). `pyproject.toml` declara lo que necesitamos y `uv.lock` fija las versiones exactas, así todo el grupo usa lo mismo. El Dockerfile instala desde el mismo `uv.lock`.
 
 ```bash
-pip install -r requirements.txt
-python simulador.py
+docker compose up -d mosquitto   # solo el broker
+cd sensores
+uv run simulador.py              # crea el .venv, instala y ejecuta
 ```
+
+Para agregar una dependencia: `uv add <paquete>` (actualiza `pyproject.toml` y `uv.lock`).
 
 ## Opcional: Node-RED
 

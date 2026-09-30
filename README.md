@@ -50,7 +50,7 @@ Cada carpeta tiene su propio `README.md` que explica ese componente.
 
 - [Docker](https://docs.docker.com/get-docker/) con Docker Compose
 - ~8 GB de RAM libres para levantar todo el stack (Kafka + Hadoop + Spark)
-- Python 3.10+ (solo si se quiere correr los scripts fuera de Docker)
+- [uv](https://docs.astral.sh/uv/getting-started/installation/) (solo para correr los scripts de Python fuera de Docker; `uv` también instala Python si hace falta)
 
 ## Cómo ejecutarlo
 
