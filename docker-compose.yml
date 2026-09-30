@@ -2,7 +2,34 @@
 # Cada PR agrega aquí los servicios de su componente.
 name: iot-bigdata
 
-services: {}
+services:
+  # --- PR 1: sensores + broker MQTT ---
+  mosquitto:
+    image: eclipse-mosquitto:2
+    ports:
+      - "1883:1883"
+    volumes:
+      - ./mosquitto/mosquitto.conf:/mosquitto/config/mosquitto.conf:ro
+
+  sensores:
+    build: ./sensores
+    environment:
+      MQTT_HOST: mosquitto
+      NUM_MAQUINAS: 5
+      INTERVALO_SEGUNDOS: 1
+    depends_on:
+      - mosquitto
+    restart: unless-stopped
+
+  # Opcional: simulador visual con Node-RED.
+  # Se levanta solo con: docker compose --profile nodered up -d
+  node-red:
+    image: nodered/node-red:4.0
+    profiles: ["nodered"]
+    ports:
+      - "1880:1880"
+    depends_on:
+      - mosquitto
 
 # Red compartida para que los servicios se encuentren por nombre
 # (por ejemplo: mosquitto, kafka, influxdb).

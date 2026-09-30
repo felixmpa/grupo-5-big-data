@@ -1,0 +1,78 @@
+[
+  {
+    "id": "tab_sensores",
+    "type": "tab",
+    "label": "Sensores IoT",
+    "info": "Simula una máquina y publica una lectura por segundo al broker MQTT."
+  },
+  {
+    "id": "cada_segundo",
+    "type": "inject",
+    "z": "tab_sensores",
+    "name": "Cada 1 segundo",
+    "props": [],
+    "repeat": "1",
+    "crontab": "",
+    "once": true,
+    "onceDelay": "1",
+    "x": 150,
+    "y": 100,
+    "wires": [
+      [
+        "generar_lectura"
+      ]
+    ]
+  },
+  {
+    "id": "generar_lectura",
+    "type": "function",
+    "z": "tab_sensores",
+    "name": "Generar lectura",
+    "func": "// Simula una máquina con la misma lógica que simulador.py\nconst DEGRADACION = 60, FALLA = 20, PROB = 0.005;\nlet st = context.get('st') || { estado: 'normal', contador: 0 };\n\nst.contador++;\nif (st.estado === 'normal' && Math.random() < PROB) st = { estado: 'degradacion', contador: 0 };\nelse if (st.estado === 'degradacion' && st.contador >= DEGRADACION) st = { estado: 'falla', contador: 0 };\nelse if (st.estado === 'falla' && st.contador >= FALLA) st = { estado: 'normal', contador: 0 };\ncontext.set('st', st);\n\nconst s = st.estado === 'degradacion' ? st.contador / DEGRADACION : (st.estado === 'falla' ? 1 : 0);\nconst ruido = (d) => (Math.random() * 2 - 1) * d;\n\nmsg.topic = 'fabrica/maquina-nodered/lecturas';\nmsg.payload = {\n    maquina_id: 'maquina-nodered',\n    timestamp: new Date().toISOString(),\n    temperatura: +(60 + 30 * s + ruido(1)).toFixed(2),\n    vibracion: +(2 + 6 * s * s + ruido(0.2)).toFixed(3),\n    presion: +(5 - 1.5 * s + ruido(0.1)).toFixed(3),\n    rpm: +(1500 - 200 * s + ruido(10)).toFixed(1),\n    estado: st.estado\n};\nreturn msg;",
+    "outputs": 1,
+    "x": 350,
+    "y": 100,
+    "wires": [
+      [
+        "publicar_mqtt",
+        "ver_lectura"
+      ]
+    ]
+  },
+  {
+    "id": "publicar_mqtt",
+    "type": "mqtt out",
+    "z": "tab_sensores",
+    "name": "Publicar en MQTT",
+    "topic": "",
+    "qos": "1",
+    "retain": "false",
+    "broker": "broker_mosquitto",
+    "x": 570,
+    "y": 80,
+    "wires": []
+  },
+  {
+    "id": "ver_lectura",
+    "type": "debug",
+    "z": "tab_sensores",
+    "name": "Ver lectura",
+    "active": false,
+    "complete": "payload",
+    "x": 560,
+    "y": 140,
+    "wires": []
+  },
+  {
+    "id": "broker_mosquitto",
+    "type": "mqtt-broker",
+    "name": "Mosquitto",
+    "broker": "mosquitto",
+    "port": "1883",
+    "clientid": "node-red-sensores",
+    "protocolVersion": "4",
+    "keepalive": "60",
+    "cleansession": true,
+    "autoConnect": true
+  }
+]

@@ -55,19 +55,33 @@ Cada carpeta tiene su propio `README.md` que explica ese componente.
 ## Cómo ejecutarlo
 
 ```bash
-docker compose up -d      # levanta los servicios
-docker compose ps         # muestra su estado
-docker compose down       # los detiene
+docker compose up -d --build   # levanta los servicios
+docker compose ps              # muestra su estado
+docker compose down            # los detiene
 ```
 
-> Por ahora el `docker-compose.yml` no tiene servicios. Cada PR va agregando los suyos.
+Para ver los mensajes de los sensores llegando al broker MQTT:
+
+```bash
+docker compose exec mosquitto mosquitto_sub -t 'fabrica/#' -v
+```
+
+### Servicios disponibles
+
+| Servicio | Puerto | Para qué |
+|---|---|---|
+| `mosquitto` | 1883 | Broker MQTT |
+| `sensores` | – | Simulador de 5 máquinas |
+| `node-red` (opcional) | 1880 | Simulador visual. Se levanta con `docker compose --profile nodered up -d` |
+
+Cada PR va agregando sus servicios a esta tabla.
 
 ## Plan de trabajo
 
 El avance se lleva en el issue #1. Cada componente se entrega en un PR aparte:
 
 - [x] PR 0 – Base del proyecto
-- [ ] PR 1 – Simulación de sensores + broker MQTT
+- [x] PR 1 – Simulación de sensores + broker MQTT
 - [ ] PR 2 – Transferencia a Kafka
 - [ ] PR 3 – Almacenamiento en InfluxDB
 - [ ] PR 4 – Data Lake en HDFS
