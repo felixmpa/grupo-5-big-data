@@ -51,7 +51,7 @@ Diseñamos y construimos un **prototipo funcional de mantenimiento predictivo** 
 
 Resultados principales:
 
-- **El modelo avisó las 24 fallas del conjunto de prueba antes de que empezaran, con 65 segundos de anticipación promedio**, y una exactitud de clasificación del **97.4 %**.
+- **El modelo avisó las 25 fallas del conjunto de prueba antes de que empezaran, con ~1 minuto de anticipación (56 s en promedio)**, y una exactitud de clasificación del **98.4 %**.
 - En vivo, el estado predicho coincidió con el real en el **98.6 %** de los casos, con falsas alarmas en solo el **0.6 %** de los momentos normales.
 - El pipeline **no pierde ni duplica datos** ante caídas de Kafka, InfluxDB o HDFS. Lo verificamos comparando mensaje a mensaje.
 - Guardar el histórico en **Parquet ocupa ~19 veces menos** que el JSON crudo.
@@ -322,7 +322,7 @@ Detalles de metodología:
 - **`class_weight="balanced"`:** hay muchas más ventanas normales que de falla, y así el modelo no ignora las fallas.
 - **Alerta** cuando el riesgo es ≥ 50 %.
 
-El **predictor en vivo** lee Kafka, guarda los últimos 30 s de cada máquina y cada 5 s calcula **las mismas características que Spark**. Verificamos con 200 ventanas que la diferencia es menor a 0.001 %. Después aplica los dos modelos y escribe en InfluxDB (`predicciones`). Salida real:
+El **predictor en vivo** lee Kafka, guarda los últimos 30 s de cada máquina y cada 5 s calcula **las mismas características que Spark**. Lo verificamos recalculando **las 1230 ventanas** de Spark desde las lecturas limpias: coinciden todos los conteos y la diferencia absoluta máxima es 1e-7, que es ruido de coma flotante. Después aplica los dos modelos y escribe en InfluxDB (`predicciones`). Salida real:
 
 ```
 maquina-04: ALERTA (riesgo 88%, predicho degradacion, real degradacion)
@@ -361,16 +361,16 @@ La regla **"Riesgo de falla alto"** se evalúa cada 10 s y se dispara **por máq
 
 ## 6. Resultados del modelo
 
-Entrenamos con **2 horas de historia** (1225 ventanas de 30 s: 915 para entrenar y 310 para evaluar).
+Entrenamos con **2 horas de historia** generadas con semilla 42 desde volúmenes vacíos (1228 ventanas de 30 s: 920 para entrenar y 308 para evaluar). Repitiendo la [guía de la demo](#11-guía-para-ejecutar-la-demo) se obtienen números muy parecidos.
 
 ### Clasificador (Random Forest)
 
 | Estado | Precisión | Recall | Ventanas de prueba |
 |---|---|---|---|
-| Normal | 99.5 % | 97.2 % | 215 |
-| Degradación | 95.9 % | 98.6 % | 71 |
-| Falla | 85.2 % | 95.8 % | 24 |
-| **Exactitud total** | | **97.4 %** | 310 |
+| Normal | 99.0 % | 98.6 % | 208 |
+| Degradación | 98.6 % | 97.3 % | 75 |
+| Falla | 92.6 % | 100 % | 25 |
+| **Exactitud total** | | **98.4 %** | 308 |
 
 - **Precisión**: cuando el modelo dice "falla", cuántas veces acierta.
 - **Recall**: de las fallas reales, cuántas detecta.
@@ -383,10 +383,12 @@ Entrenamos con **2 horas de historia** (1225 ventanas de 30 s: 915 para entrenar
 
 | Métrica | Resultado |
 |---|---|
-| Ventanas con problema detectadas | **98.9 %** |
-| Falsas alarmas en ventanas normales | **2.8 %** |
-| Fallas avisadas **antes de empezar** | **24 de 24** |
-| Anticipación promedio | **65 segundos** |
+| Ventanas con problema detectadas | **98 %** |
+| Falsas alarmas en ventanas normales | **1.9 %** |
+| Fallas avisadas **antes de empezar** | **25 de 25** |
+| Anticipación | **22 fallas con 60 s y 3 con 30 s** (promedio 56 s) |
+
+La anticipación se mide desde la primera alerta del **tramo de degradación inmediatamente anterior** a cada falla. Como se mide por ventanas, es **múltiplo de 30 s**: "60 s" quiere decir "2 ventanas antes", no una precisión al segundo. Una alerta que llega recién en la ventana de la falla cuenta como 0 s, es decir, no como aviso anticipado.
 
 ![Riesgo vs. estado real](../ml/resultados/linea_de_tiempo.png)
 
@@ -396,8 +398,8 @@ Entrenamos con **2 horas de historia** (1225 ventanas de 30 s: 915 para entrenar
 
 | Estado real | Marcado como anomalía |
 |---|---|
-| Normal | 5.6 % |
-| Degradación | 56.3 % |
+| Normal | 3.8 % |
+| Degradación | 62.7 % |
 | Falla | **100 %** |
 
 Sin haber visto nunca una falla, el detector reconoce **todas**. La degradación temprana le cuesta más, porque al principio se parece mucho a lo normal. Por eso los dos modelos se complementan.
@@ -425,7 +427,7 @@ El estado predicho coincidió con el real en el **98.6 %** de las predicciones.
 > 2. El problema estaba en **cómo comparábamos**. Usábamos el estado de la *última* lectura, pero el modelo mira los últimos 30 s; justo después de una reparación, esos 30 s todavía contienen la falla.
 > 3. Además, la simulación estaba acelerada.
 >
-> Al comparar contra el estado mayoritario de la ventana, que es la misma etiqueta del entrenamiento, el resultado fue 98.6 %. **Evaluar bien es tan importante como entrenar bien.**
+> Al comparar contra el estado mayoritario de la ventana, que es la misma etiqueta del entrenamiento, el resultado subió a 98.6 %. **Evaluar bien es tan importante como entrenar bien.**
 
 ## 7. Pruebas de resiliencia y calidad de datos
 
@@ -444,7 +446,7 @@ Un sistema de Big Data tiene que seguir funcionando cuando algo falla. Probamos 
 
 ### Errores encontrados en la revisión de código
 
-El desarrollo fue por *pull requests* revisados uno a uno. La revisión encontró dos errores que **ninguna prueba "normal" habría detectado**:
+El desarrollo fue por *pull requests* revisados uno a uno. La revisión encontró errores que **ninguna prueba "normal" habría detectado**. Los dos más graves:
 
 1. **Fecha inválida (PR 3).** Un mensaje con `"timestamp": "no-es-una-fecha"` hacía que el consumidor de InfluxDB reintentara para siempre: confundía un error de datos con una caída del servidor. **El pipeline de tiempo real se detenía en silencio.**
 2. **Texto con caracteres inválidos (PR 4).** Un texto como `"maq\ud800"` es JSON válido, pero no se puede guardar en UTF-8. Bloqueaba a la vez el consumidor de HDFS y el de InfluxDB.
@@ -454,7 +456,9 @@ En los dos casos, la causa de fondo era la misma: **reintentar ante cualquier er
 - **Validar cada mensaje al leerlo:** si un dato no se puede guardar, se descarta y queda en el log.
 - **Reintentar solo ante errores de red o del servidor.**
 
-Desde entonces, todos los componentes siguen esta regla.
+Desde entonces, todos los componentes siguen esta regla. La revisión del PR 6 encontró que el predictor validaba `maquina_id` pero no `estado`: un `estado` con `"\ud800"` lo hacía caer. Era de baja gravedad, porque el servicio se reinicia solo y salta el mensaje, pero ahora también se valida: 12 mensajes así se descartan sin reiniciar el servicio.
+
+La misma revisión encontró un problema en **cómo medíamos la anticipación**. Si una máquina fallaba dos veces seguidas, sin un periodo normal entre ellas, la alerta de la primera falla se contaba para la segunda y daba avisos de 150 s, imposibles con una degradación de ~60 s. Además, un aviso de 0 s habría contado como "anticipado". Corregimos la métrica, y el promedio pasó de 65 s a un valor honesto de 56 s. **Una métrica mal definida puede hacer ver mejor un modelo sin que nadie lo note.**
 
 Otros hallazgos y correcciones:
 
@@ -530,7 +534,7 @@ Cada pieza tiene un servicio administrado equivalente, así que la misma arquite
 
 1. **IoT y Big Data se complementan.** Los sensores generan el dato, pero sin una plataforma que lo reciba, guarde y analice a escala, ese dato no se convierte en una decisión. Con 5 máquinas ya son 70 MB por día; con 1000, 14 GB.
 2. **Cada herramienta resuelve una parte.** MQTT acerca los datos desde los dispositivos, Kafka los desacopla y distribuye, InfluxDB sirve el presente, HDFS guarda el pasado, Spark lo procesa, el ML aprende y Grafana lo comunica. La arquitectura en dos capas (tiempo real e histórica) permite tener las dos cosas a la vez.
-3. **El mantenimiento predictivo funciona:** el sistema avisó todas las fallas de la prueba con más de un minuto de anticipación. En una fábrica, ese minuto es la diferencia entre una parada planificada y una avería.
+3. **El mantenimiento predictivo funciona:** el sistema avisó todas las fallas de la prueba antes de que empezaran, en general con un minuto de anticipación. En una fábrica, ese minuto es la diferencia entre una parada planificada y una avería.
 4. **La confiabilidad se diseña y se prueba.** Confirmar después de guardar, deduplicar con offsets, escribir de forma atómica y validar antes de reintentar no son detalles: sin ellos, el sistema pierde o duplica datos, o se detiene en silencio. Varios de estos errores solo aparecieron en la revisión de código, lo que confirma su valor.
 5. **La arquitectura es portable.** Cada pieza tiene su equivalente administrado en la nube, así que el prototipo puede crecer sin rediseñarse.
 
