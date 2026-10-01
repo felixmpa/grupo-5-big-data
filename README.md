@@ -66,12 +66,22 @@ Para ver los mensajes de los sensores llegando al broker MQTT:
 docker compose exec mosquitto mosquitto_sub -t 'fabrica/#' -v
 ```
 
+Y llegando a Kafka:
+
+```bash
+docker compose exec kafka /opt/kafka/bin/kafka-console-consumer.sh \
+  --bootstrap-server kafka:9092 --topic sensores
+```
+
 ### Servicios disponibles
 
 | Servicio | Puerto | Para qué |
 |---|---|---|
 | `mosquitto` | 1883 | Broker MQTT |
 | `sensores` | – | Simulador de 5 máquinas |
+| `kafka` | 9094 | Kafka. Desde Docker se usa `kafka:9092`; desde tu máquina, `localhost:9094` |
+| `kafka-init` | – | Crea el topic `sensores` al arrancar y termina |
+| `puente-mqtt-kafka` | – | Reenvía las lecturas de MQTT a Kafka |
 | `node-red` (opcional) | 1880 | Simulador visual. Se levanta con `docker compose --profile nodered up -d` |
 
 Cada PR va agregando sus servicios a esta tabla.
@@ -82,7 +92,7 @@ El avance se lleva en el issue #1. Cada componente se entrega en un PR aparte:
 
 - [x] PR 0 – Base del proyecto
 - [x] PR 1 – Simulación de sensores + broker MQTT
-- [ ] PR 2 – Transferencia a Kafka
+- [x] PR 2 – Transferencia a Kafka
 - [ ] PR 3 – Almacenamiento en InfluxDB
 - [ ] PR 4 – Data Lake en HDFS
 - [ ] PR 5 – Procesamiento con Spark
