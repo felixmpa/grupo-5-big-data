@@ -84,4 +84,5 @@ Con `Ctrl+C` se detiene de forma ordenada: primero envía a Kafka los mensajes p
 
 - **Mensaje que no es JSON o no trae `maquina_id`**: se descarta y queda registrado en el log.
 - **Kafka se cae**: el puente guarda los mensajes en memoria y los envía cuando Kafka vuelve. Lo probamos reiniciando Kafka con el sistema corriendo: no se perdió ninguna lectura, no hubo duplicados y el orden se mantuvo.
-- **MQTT se cae**: el puente se reconecta y se vuelve a suscribir solo.
+- **MQTT se cae**: el puente se reconecta y se vuelve a suscribir solo. A diferencia de Kafka, aquí sí se puede perder la lectura que iba en vuelo, porque el broker no guarda la sesión (`persistence false`). En las pruebas fue 1 lectura de 814.
+- **`docker compose down`**: los mensajes de Kafka se guardan en el volumen `kafka-data`, así que no se pierden. Para borrarlos: `docker compose down -v`.

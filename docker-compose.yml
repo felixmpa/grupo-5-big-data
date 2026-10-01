@@ -54,6 +54,11 @@ services:
       KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
       KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
       KAFKA_HEAP_OPTS: -Xms512m -Xmx512m
+      KAFKA_LOG_DIRS: /var/lib/kafka/data
+    volumes:
+      # Los mensajes se guardan en un volumen: sobreviven a "docker compose down".
+      # Para borrarlos: docker compose down -v
+      - kafka-data:/var/lib/kafka/data
     healthcheck:
       test: ["CMD-SHELL", "/opt/kafka/bin/kafka-broker-api-versions.sh --bootstrap-server localhost:9092 > /dev/null 2>&1"]
       interval: 5s
@@ -88,6 +93,9 @@ services:
       kafka-init:
         condition: service_completed_successfully
     restart: unless-stopped
+
+volumes:
+  kafka-data:
 
 # Red compartida para que los servicios se encuentren por nombre
 # (por ejemplo: mosquitto, kafka, influxdb).
