@@ -36,6 +36,7 @@ Cada lectura es un **valor medido en un instante**. InfluxDB está hecho para es
 
 - **Si InfluxDB está caído**, el consumidor reintenta cada 5 s sin confirmar nada. Cuando vuelve, sigue desde donde quedó.
 - **Si el consumidor se cae** entre el paso 2 y el 3, al volver relee ese lote. No se duplica: en InfluxDB un punto con la misma máquina y el mismo timestamp **se sobrescribe**.
+- **Si llega un mensaje inválido** (JSON roto, campo faltante, valor no numérico o fecha inválida), se descarta y queda en el log. El resto del lote se guarda normal: un mensaje malo no frena al consumidor.
 
 Gracias al grupo de consumidores de Kafka (`consumidor-influxdb`), este consumidor lleva su propia posición en el topic y no interfiere con el del Data Lake (PR 4).
 

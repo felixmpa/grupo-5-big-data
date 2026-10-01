@@ -14,6 +14,7 @@ import os
 import signal
 import sys
 import time
+from datetime import datetime
 
 from confluent_kafka import Consumer, KafkaException
 from influxdb_client import InfluxDBClient, Point, WritePrecision
@@ -37,13 +38,14 @@ def a_punto(valor):
     """Convierte un mensaje de Kafka en un punto de InfluxDB (o None si es inválido)."""
     try:
         lectura = json.loads(valor)
+        # Validamos la fecha aquí: Point.time() no la revisa y el error saldría
+        # recién al escribir en InfluxDB, bloqueando el lote para siempre.
+        momento = datetime.fromisoformat(lectura["timestamp"].replace("Z", "+00:00"))
         punto = Point("lecturas").tag("maquina_id", lectura["maquina_id"])
         for campo in CAMPOS:
             punto = punto.field(campo, float(lectura[campo]))
-        return punto.field("estado", str(lectura["estado"])).time(
-            lectura["timestamp"], WritePrecision.MS
-        )
-    except (ValueError, KeyError, TypeError):
+        return punto.field("estado", str(lectura["estado"])).time(momento, WritePrecision.MS)
+    except (ValueError, KeyError, TypeError, AttributeError):
         print(f"Mensaje inválido, se descarta: {valor[:100]!r}")
         return None
 
