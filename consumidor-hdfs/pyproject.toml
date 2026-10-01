@@ -1,0 +1,9 @@
+[project]
+name = "consumidor-hdfs"
+version = "0.1.0"
+description = "Guarda el histórico crudo del topic sensores de Kafka en HDFS"
+requires-python = ">=3.10"
+dependencies = [
+    "confluent-kafka>=2.6,<3",
+    "hdfs>=2.7,<3",
+]
