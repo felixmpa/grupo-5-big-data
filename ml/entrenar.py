@@ -64,19 +64,30 @@ def cargar_ventanas():
 
 
 def anticipacion(test, alerta):
-    """Segundos entre la primera alerta y el inicio de cada falla en el test."""
+    """Segundos entre la primera alerta y el inicio de cada falla en el test.
+
+    Solo cuenta la alerta dentro del tramo de degradación inmediatamente
+    anterior a la falla. Así, si una máquina falla dos veces seguidas, la
+    alerta de la primera no se atribuye a la segunda. Devuelve un valor por
+    falla: None si no hubo alerta, 0 si la alerta llegó recién en la ventana
+    en que empieza la falla. Como se mide por ventanas, los valores son
+    múltiplos de 30 s.
+    """
     resultados = []
     datos = test.assign(alerta=alerta).sort_values(["maquina_id", "inicio"])
     for _, maquina in datos.groupby("maquina_id"):
         primera_alerta, anterior = None, "normal"
         for fila in maquina.itertuples():
-            if fila.estado_mayoritario == "normal":
-                primera_alerta = None
-            elif fila.alerta and primera_alerta is None:
-                primera_alerta = fila.inicio
             if fila.estado_mayoritario == "falla" and anterior != "falla":
-                aviso = (fila.inicio - primera_alerta).total_seconds() if primera_alerta is not None else None
-                resultados.append(aviso)
+                if primera_alerta is not None:
+                    resultados.append((fila.inicio - primera_alerta).total_seconds())
+                else:
+                    resultados.append(0.0 if fila.alerta else None)
+            if fila.estado_mayoritario == "degradacion":
+                if fila.alerta and primera_alerta is None:
+                    primera_alerta = fila.inicio
+            else:
+                primera_alerta = None  # termina el tramo de degradación
             anterior = fila.estado_mayoritario
     return resultados
 
@@ -194,12 +205,17 @@ def main():
 
     hay_problema = (test.estado_mayoritario != "normal").to_numpy()
     avisos = anticipacion(test, alerta)
-    detectadas = [a for a in avisos if a is not None]
+    # Solo cuenta como aviso anticipado si la alerta llegó en una ventana
+    # anterior a la falla (más de 0 s antes).
+    detectadas = [a for a in avisos if a is not None and a > 0]
+    distribucion = {("sin alerta" if a is None else f"{a:.0f} s"): avisos.count(a) for a in sorted(
+        set(avisos), key=lambda v: -1 if v is None else v)}
     print(f"Alertas (riesgo >= {UMBRAL_RIESGO:.0%}): detectan {alerta[hay_problema].mean():.1%} de las "
           f"ventanas con problema; falsas alarmas en {alerta[~hay_problema].mean():.1%} de las normales")
     if avisos:
         print(f"Fallas en la prueba: {len(avisos)}; avisadas antes de empezar: {len(detectadas)}; "
               f"anticipación promedio: {np.mean(detectadas) if detectadas else 0:.0f} s")
+        print(f"Anticipación por falla (múltiplos de la ventana de 30 s): {distribucion}")
 
     # 2. Detector de anomalías: solo ve ventanas normales
     detector = IsolationForest(n_estimators=200, contamination=0.02, random_state=42)
@@ -237,6 +253,7 @@ def main():
             "fallas_en_prueba": len(avisos),
             "fallas_avisadas_antes": len(detectadas),
             "anticipacion_promedio_segundos": round(float(np.mean(detectadas)), 1) if detectadas else None,
+            "anticipacion_por_falla": distribucion,
         },
         "detector_anomalias": {"proporcion_marcada_por_estado": {k: round(v, 3) for k, v in tasa_anomalias.items()}},
         "importancia_caracteristicas": dict(sorted(
