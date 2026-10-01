@@ -94,8 +94,48 @@ services:
         condition: service_completed_successfully
     restart: unless-stopped
 
+  # --- PR 3: InfluxDB (series de tiempo) ---
+  influxdb:
+    image: influxdb:2.8
+    ports:
+      - "8086:8086"   # API y web: http://localhost:8086
+    environment:
+      # Configuración inicial automática (solo la primera vez).
+      # Credenciales de demo: en producción irían en un archivo .env fuera del repo.
+      DOCKER_INFLUXDB_INIT_MODE: setup
+      DOCKER_INFLUXDB_INIT_USERNAME: admin
+      DOCKER_INFLUXDB_INIT_PASSWORD: admin12345
+      DOCKER_INFLUXDB_INIT_ORG: grupo5
+      DOCKER_INFLUXDB_INIT_BUCKET: sensores
+      DOCKER_INFLUXDB_INIT_RETENTION: 30d
+      DOCKER_INFLUXDB_INIT_ADMIN_TOKEN: token-demo-grupo5
+    volumes:
+      - influxdb-data:/var/lib/influxdb2
+    healthcheck:
+      test: ["CMD", "influx", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  consumidor-influxdb:
+    build: ./consumidor-influxdb
+    environment:
+      KAFKA_BOOTSTRAP: kafka:9092
+      KAFKA_TOPIC: sensores
+      INFLUX_URL: http://influxdb:8086
+      INFLUX_TOKEN: token-demo-grupo5
+      INFLUX_ORG: grupo5
+      INFLUX_BUCKET: sensores
+    depends_on:
+      kafka-init:
+        condition: service_completed_successfully
+      influxdb:
+        condition: service_healthy
+    restart: unless-stopped
+
 volumes:
   kafka-data:
+  influxdb-data:
 
 # Red compartida para que los servicios se encuentren por nombre
 # (por ejemplo: mosquitto, kafka, influxdb).
