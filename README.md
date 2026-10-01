@@ -2,6 +2,8 @@
 
 Este prototipo simula sensores de máquinas industriales (temperatura, vibración, presión, RPM), envía sus datos a la nube, los guarda en una plataforma de Big Data y usa Machine Learning para **detectar anomalías y anticipar fallas**. Un dashboard muestra todo en tiempo real.
 
+> 📄 **[Informe técnico completo](docs/informe-tecnico.md)**: arquitectura, capturas, resultados del modelo y conclusiones.
+
 ## Arquitectura
 
 ```mermaid
@@ -33,7 +35,7 @@ flowchart LR
 ```
 .
 ├── docker-compose.yml       # Levanta todos los servicios
-├── docs/                    # Informe técnico e imágenes
+├── docs/                    # Informe técnico, capturas y diagramas  (PR 8)
 ├── sensores/                # Simulador de sensores IoT          (PR 1)
 ├── mosquitto/               # Configuración del broker MQTT      (PR 1)
 ├── puente-mqtt-kafka/       # Pasa los mensajes de MQTT a Kafka  (PR 2)
@@ -108,4 +110,4 @@ El avance se lleva en el issue #1. Cada componente se entrega en un PR aparte:
 - [x] PR 5 – Procesamiento con Spark
 - [x] PR 6 – Modelo predictivo con Scikit-learn
 - [x] PR 7 – Dashboard en Grafana
-- [ ] PR 8 – Informe técnico y documentación final
+- [x] PR 8 – Informe técnico y documentación final
