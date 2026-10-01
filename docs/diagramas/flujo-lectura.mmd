@@ -1,0 +1,22 @@
+sequenceDiagram
+    autonumber
+    participant S as Sensor (máquina-03)
+    participant M as Mosquitto
+    participant P as Puente
+    participant K as Kafka
+    participant I as InfluxDB
+    participant H as HDFS
+    participant PD as Predictor
+    participant G as Grafana
+    S->>M: publish fabrica/maquina-03/lecturas (JSON)
+    M->>P: entrega a suscriptores
+    P->>K: produce clave=maquina-03 (acks=all)
+    par Consumidores independientes
+        K->>I: consumidor-influxdb (lotes de 500)
+    and
+        K->>H: consumidor-hdfs (1 archivo/min)
+    and
+        K->>PD: predictor (últimos 30 s)
+        PD->>I: riesgo, alerta, anomalía
+    end
+    G->>I: consulta Flux cada 5 s

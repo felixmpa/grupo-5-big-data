@@ -1,0 +1,11 @@
+stateDiagram-v2
+    direction LR
+    [*] --> normal
+    normal --> degradacion: al azar (0.5 % por lectura)
+    degradacion --> falla: 60 lecturas (~60 s)
+    falla --> normal: 20 lecturas (mantenimiento)
+    note right of degradacion
+        Temperatura +0.5 °C/s
+        Vibración y RPM empeoran
+        El modelo avisa aquí
+    end note

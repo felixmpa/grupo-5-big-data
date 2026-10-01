@@ -1,0 +1,5 @@
+flowchart LR
+    K[("Kafka<br/>topic sensores")] --> C["<b>Zona cruda</b><br/>/datalake/crudo/sensores<br/>JSON Lines por fecha<br/>+ partición y offset"]
+    C -- "Spark:<br/>deduplicar y validar" --> L["<b>Zona procesada</b><br/>/datalake/procesado/lecturas<br/>Parquet"]
+    L -- "Spark:<br/>ventanas de 30 s" --> V["<b>Características</b><br/>/datalake/procesado/ventanas<br/>Parquet · 20 columnas"]
+    V -- "entrenar.py" --> M[("modelo.joblib")]

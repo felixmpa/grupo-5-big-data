@@ -1,0 +1,18 @@
+flowchart TB
+    subgraph F["Fábrica (borde)"]
+        S["Sensores IoT simulados<br/>5 máquinas · Python / Node-RED"]
+    end
+    subgraph I["Ingesta"]
+        M["Mosquitto<br/>broker MQTT"] --> P["Puente<br/>MQTT → Kafka"] --> K[("Kafka<br/>topic sensores · 3 particiones")]
+    end
+    subgraph B["Capa histórica (por lotes)"]
+        H[("HDFS · Data Lake<br/>todo el histórico")] --> SP["Spark<br/>limpieza y características"] --> E["Entrenamiento<br/>Random Forest + Isolation Forest"]
+    end
+    subgraph RT["Capa en tiempo real"]
+        PD["Predictor<br/>riesgo cada 5 s"] --> IN[("InfluxDB<br/>series de tiempo · 30 días")] --> G["Grafana<br/>dashboard + alertas"]
+    end
+    S -- "MQTT · JSON · 1 lectura/s por máquina" --> M
+    K -- "consumidor-hdfs" --> H
+    K -- "lecturas en vivo" --> PD
+    K -- "consumidor-influxdb" --> IN
+    E -- "modelo.joblib" --> PD
