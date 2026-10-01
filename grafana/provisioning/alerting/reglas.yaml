@@ -1,0 +1,49 @@
+# Regla de alerta: se dispara por máquina cuando el riesgo de falla que
+# calcula el modelo (PR 6) supera el 50 %. Se ve en el panel "Alertas de
+# Grafana" y en el menú Alerting. Para recibir avisos (correo, Telegram,
+# Slack...) hay que configurar un "contact point" en la web.
+apiVersion: 1
+groups:
+  - orgId: 1
+    name: fabrica
+    folder: Fábrica
+    interval: 10s
+    rules:
+      - uid: riesgo-falla
+        title: Riesgo de falla alto
+        condition: C
+        data:
+          - refId: A
+            relativeTimeRange: {from: 120, to: 0}
+            datasourceUid: influxdb
+            model:
+              refId: A
+              query: |
+                from(bucket: "sensores")
+                  |> range(start: -2m)
+                  |> filter(fn: (r) => r._measurement == "predicciones" and r._field == "riesgo")
+                  |> last()
+                  |> keep(columns: ["_time", "_value", "maquina_id"])
+          - refId: B
+            datasourceUid: __expr__
+            model:
+              refId: B
+              type: reduce
+              expression: A
+              reducer: last
+          - refId: C
+            datasourceUid: __expr__
+            model:
+              refId: C
+              type: threshold
+              expression: B
+              conditions:
+                - evaluator: {type: gt, params: [0.5]}
+        noDataState: OK
+        execErrState: Error
+        for: 0s
+        labels:
+          severidad: critica
+        annotations:
+          summary: '{{ $labels.maquina_id }}: riesgo de falla {{ humanizePercentage $values.B.Value }}'
+          description: El modelo predice degradación o falla. Revisar la máquina antes de que falle.

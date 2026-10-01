@@ -1,0 +1,9 @@
+# Carga los dashboards (archivos JSON) de /var/lib/grafana/dashboards.
+apiVersion: 1
+providers:
+  - name: fabrica
+    folder: Fábrica
+    type: file
+    allowUiUpdates: true    # se puede editar desde la web (los cambios no se guardan en el repo)
+    options:
+      path: /var/lib/grafana/dashboards

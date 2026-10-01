@@ -254,11 +254,39 @@ services:
         condition: service_healthy
     restart: unless-stopped
 
+  # --- PR 7: dashboard ---
+  grafana:
+    image: grafana/grafana:12.4.2
+    ports:
+      - "3000:3000"   # http://localhost:3000 (usuario admin / admin12345)
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: admin12345
+      # Se puede ver el dashboard sin iniciar sesión (solo lectura).
+      GF_AUTH_ANONYMOUS_ENABLED: "true"
+      GF_AUTH_ANONYMOUS_ORG_ROLE: Viewer
+      GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH: /var/lib/grafana/dashboards/fabrica.json
+      GF_USERS_DEFAULT_LANGUAGE: es-ES
+      # Sin descargas de internet: no instala plugins extra ni busca actualizaciones.
+      GF_PLUGINS_PREINSTALL_DISABLED: "true"
+      GF_PLUGINS_PUBLIC_KEY_RETRIEVAL_DISABLED: "true"
+      GF_ANALYTICS_CHECK_FOR_UPDATES: "false"
+      GF_ANALYTICS_CHECK_FOR_PLUGIN_UPDATES: "false"
+      GF_ANALYTICS_REPORTING_ENABLED: "false"
+    volumes:
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./grafana/dashboards:/var/lib/grafana/dashboards:ro
+      - grafana-data:/var/lib/grafana
+    depends_on:
+      influxdb:
+        condition: service_healthy
+
 volumes:
   kafka-data:
   influxdb-data:
   namenode-data:
   datanode-data:
+  grafana-data:
 
 # Red compartida para que los servicios se encuentren por nombre
 # (por ejemplo: mosquitto, kafka, influxdb).
