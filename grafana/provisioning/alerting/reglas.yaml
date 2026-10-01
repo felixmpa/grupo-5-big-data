@@ -45,5 +45,7 @@ groups:
         labels:
           severidad: critica
         annotations:
-          summary: '{{ $labels.maquina_id }}: riesgo de falla {{ humanizePercentage $values.B.Value }}'
+          # Sin predicciones todavía (arranque en frío) $values.B no existe:
+          # se evita el error "can't convert <nil> to float" al expandir.
+          summary: '{{ $labels.maquina_id }}: riesgo de falla {{ if $values.B }}{{ humanizePercentage $values.B.Value }}{{ else }}sin datos{{ end }}'
           description: El modelo predice degradación o falla. Revisar la máquina antes de que falle.
