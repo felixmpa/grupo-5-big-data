@@ -9,6 +9,7 @@ luego se "repara" y vuelve a la normalidad.
 import json
 import os
 import random
+import sys
 import time
 from datetime import datetime, timezone
 
@@ -93,6 +94,9 @@ def conectar():
 
 
 def main():
+    # Muestra cada línea apenas se imprime, aunque la salida vaya a un
+    # archivo o a los logs de Docker.
+    sys.stdout.reconfigure(line_buffering=True)
     maquinas = [Maquina(f"maquina-{i:02d}") for i in range(1, NUM_MAQUINAS + 1)]
     cliente = conectar()
 

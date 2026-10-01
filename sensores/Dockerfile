@@ -10,5 +10,4 @@ ENV PATH="/app/.venv/bin:$PATH"
 
 COPY simulador.py .
 
-# -u: muestra los prints en los logs sin esperar al buffer
-CMD ["python", "-u", "simulador.py"]
+CMD ["python", "simulador.py"]
