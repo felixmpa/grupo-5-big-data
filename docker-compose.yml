@@ -153,6 +153,7 @@ services:
     command: ["hdfs", "namenode"]
     ports:
       - "9870:9870"   # web de HDFS: http://localhost:9870
+      - "8020:8020"   # para Spark corriendo fuera de Docker (PR 5)
     environment:
       <<: *hadoop-config
       # La primera vez formatea el sistema de archivos (si la carpeta no existe).
@@ -171,6 +172,7 @@ services:
     command: ["hdfs", "datanode"]
     ports:
       - "9864:9864"   # WebHDFS escribe los datos directamente en el datanode
+      - "9866:9866"   # para Spark corriendo fuera de Docker (PR 5)
     environment:
       <<: *hadoop-config
     volumes:
@@ -194,6 +196,29 @@ services:
       datanode:
         condition: service_started
     restart: unless-stopped
+
+  # --- PR 5: procesamiento con Spark ---
+  # Es un proceso por lotes: no queda corriendo. Se ejecuta cuando se necesita:
+  #   docker compose run --rm spark
+  spark:
+    image: apache/spark:4.0.1-python3
+    profiles: ["spark"]
+    command:
+      - /opt/spark/bin/spark-submit
+      - --master=local[*]        # usa todos los núcleos de este contenedor
+      - --driver-memory=1g
+      - --conf=spark.log.level=WARN
+      - /app/procesar.py
+    environment:
+      HDFS_URL: hdfs://namenode:8020
+      VENTANA: 30 seconds
+    volumes:
+      - ./spark:/app:ro
+    ports:
+      - "4040:4040"   # web de Spark mientras corre (con: docker compose run --rm --service-ports spark)
+    depends_on:
+      namenode:
+        condition: service_healthy
 
 volumes:
   kafka-data:
