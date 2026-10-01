@@ -1,0 +1,9 @@
+[project]
+name = "consumidor-influxdb"
+version = "0.1.0"
+description = "Guarda las lecturas del topic sensores de Kafka en InfluxDB"
+requires-python = ">=3.10"
+dependencies = [
+    "confluent-kafka>=2.6,<3",
+    "influxdb-client>=1.40,<2",
+]
