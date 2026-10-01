@@ -1,0 +1,15 @@
+# Fuente de datos que Grafana crea automáticamente al arrancar.
+apiVersion: 1
+datasources:
+  - name: InfluxDB
+    uid: influxdb
+    type: influxdb
+    access: proxy
+    url: http://influxdb:8086
+    isDefault: true
+    jsonData:
+      version: Flux          # lenguaje de consultas de InfluxDB 2
+      organization: grupo5
+      defaultBucket: sensores
+    secureJsonData:
+      token: token-demo-grupo5   # token de demo (el mismo de docker-compose.yml)
