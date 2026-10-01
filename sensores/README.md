@@ -82,6 +82,16 @@ uv run simulador.py              # crea el .venv, instala y ejecuta
 
 Para agregar una dependencia: `uv add <paquete>` (actualiza `pyproject.toml` y `uv.lock`).
 
+## Generar historia para entrenar el modelo
+
+`generar_historico.py` simula las mismas máquinas, pero con lecturas de las **últimas N horas** (una por segundo), y las publica lo más rápido posible. Pasan por todo el pipeline igual que las lecturas en vivo, así no hay que esperar horas para tener datos de entrenamiento (PR 6):
+
+```bash
+docker compose run --rm sensores python generar_historico.py --horas 2 --semilla 42
+```
+
+Con `--semilla` se genera siempre la misma historia. 2 horas son 36 000 lecturas y se publican en unos segundos.
+
 ## Opcional: Node-RED
 
 `node-red/flujo-sensores.json` hace lo mismo pero de forma visual. Simula una máquina llamada `maquina-nodered`.

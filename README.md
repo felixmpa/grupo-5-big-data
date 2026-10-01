@@ -89,6 +89,8 @@ docker compose exec kafka /opt/kafka/bin/kafka-console-consumer.sh \
 | `datanode` | 9864 | HDFS: guarda los bloques de datos |
 | `consumidor-hdfs` | – | Guarda el histórico crudo de Kafka en HDFS |
 | `spark` (bajo demanda) | 4040 | Procesa el Data Lake. Se ejecuta con `docker compose run --rm spark` |
+| `entrenar` (bajo demanda) | – | Entrena los modelos. Se ejecuta con `docker compose run --rm entrenar` |
+| `predictor` | – | Predice fallas en vivo y escribe el riesgo y las alertas en InfluxDB |
 | `node-red` (opcional) | 1880 | Simulador visual. Se levanta con `docker compose --profile nodered up -d` |
 
 Cada PR va agregando sus servicios a esta tabla.
@@ -103,6 +105,6 @@ El avance se lleva en el issue #1. Cada componente se entrega en un PR aparte:
 - [x] PR 3 – Almacenamiento en InfluxDB
 - [x] PR 4 – Data Lake en HDFS
 - [x] PR 5 – Procesamiento con Spark
-- [ ] PR 6 – Modelo predictivo con Scikit-learn
+- [x] PR 6 – Modelo predictivo con Scikit-learn
 - [ ] PR 7 – Dashboard en Grafana
 - [ ] PR 8 – Informe técnico y documentación final

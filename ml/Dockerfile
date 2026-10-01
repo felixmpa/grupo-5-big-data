@@ -8,6 +8,8 @@ COPY pyproject.toml uv.lock ./
 RUN uv sync --frozen --no-dev
 ENV PATH="/app/.venv/bin:$PATH"
 
-COPY simulador.py generar_historico.py ./
+COPY caracteristicas.py entrenar.py predictor.py ./
 
-CMD ["python", "simulador.py"]
+# Por defecto, la predicción en vivo. El entrenamiento se corre aparte:
+#   docker compose run --rm entrenar
+CMD ["python", "predictor.py"]

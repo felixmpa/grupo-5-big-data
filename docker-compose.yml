@@ -220,6 +220,40 @@ services:
       namenode:
         condition: service_healthy
 
+  # --- PR 6: modelo predictivo ---
+  # Entrena los modelos con las ventanas de Spark. Se ejecuta bajo demanda:
+  #   docker compose run --rm entrenar
+  entrenar:
+    build: ./ml
+    profiles: ["ml"]
+    command: ["python", "entrenar.py"]
+    environment:
+      HDFS_URL: http://namenode:9870
+    volumes:
+      - ./ml/modelos:/app/modelos
+      - ./ml/resultados:/app/resultados
+    depends_on:
+      namenode:
+        condition: service_healthy
+
+  # Predicción en vivo: espera a que exista el modelo y escribe en InfluxDB.
+  predictor:
+    build: ./ml
+    environment:
+      KAFKA_BOOTSTRAP: kafka:9092
+      INFLUX_URL: http://influxdb:8086
+      INFLUX_TOKEN: token-demo-grupo5
+      INFLUX_ORG: grupo5
+      INFLUX_BUCKET: sensores
+    volumes:
+      - ./ml/modelos:/app/modelos:ro
+    depends_on:
+      kafka-init:
+        condition: service_completed_successfully
+      influxdb:
+        condition: service_healthy
+    restart: unless-stopped
+
 volumes:
   kafka-data:
   influxdb-data:

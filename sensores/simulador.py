@@ -60,10 +60,12 @@ class Maquina:
             return 1.0
         return 0.0
 
-    def leer(self):
+    def leer(self, momento=None):
+        """Devuelve una lectura. ``momento`` permite simular lecturas del pasado."""
         self._avanzar_estado()
         s = self._severidad()
-        ahora = datetime.now(timezone.utc).isoformat(timespec="milliseconds")
+        momento = momento or datetime.now(timezone.utc)
+        ahora = momento.isoformat(timespec="milliseconds")
         return {
             "maquina_id": self.maquina_id,
             "timestamp": ahora.replace("+00:00", "Z"),

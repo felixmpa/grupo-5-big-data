@@ -1,0 +1,93 @@
+{
+  "ventanas": {
+    "total": 1228,
+    "entrenamiento": 920,
+    "prueba": 308
+  },
+  "clasificador": {
+    "exactitud": 0.9837662337662337,
+    "normal": {
+      "precision": 0.99,
+      "recall": 0.986,
+      "f1-score": 0.988,
+      "support": 208.0
+    },
+    "degradacion": {
+      "precision": 0.986,
+      "recall": 0.973,
+      "f1-score": 0.98,
+      "support": 75.0
+    },
+    "falla": {
+      "precision": 0.926,
+      "recall": 1.0,
+      "f1-score": 0.962,
+      "support": 25.0
+    },
+    "matriz_confusion": {
+      "etiquetas": [
+        "normal",
+        "degradacion",
+        "falla"
+      ],
+      "valores": [
+        [
+          205,
+          1,
+          2
+        ],
+        [
+          2,
+          73,
+          0
+        ],
+        [
+          0,
+          0,
+          25
+        ]
+      ]
+    }
+  },
+  "alertas": {
+    "umbral_riesgo": 0.5,
+    "deteccion_ventanas_con_problema": 0.98,
+    "falsas_alarmas_en_normales": 0.019,
+    "fallas_en_prueba": 25,
+    "fallas_avisadas_antes": 25,
+    "anticipacion_promedio_segundos": 56.4,
+    "anticipacion_por_falla": {
+      "30 s": 3,
+      "60 s": 22
+    }
+  },
+  "detector_anomalias": {
+    "proporcion_marcada_por_estado": {
+      "normal": 0.038,
+      "degradacion": 0.627,
+      "falla": 1.0
+    }
+  },
+  "importancia_caracteristicas": {
+    "temperatura_tendencia": 0.1388,
+    "presion_tendencia": 0.1221,
+    "rpm_tendencia": 0.1192,
+    "temperatura_max": 0.0705,
+    "vibracion_media": 0.0668,
+    "vibracion_desv": 0.0638,
+    "temperatura_media": 0.0606,
+    "temperatura_desv": 0.0597,
+    "rpm_desv": 0.0495,
+    "rpm_media": 0.046,
+    "vibracion_tendencia": 0.0438,
+    "presion_desv": 0.0425,
+    "rpm_min": 0.0382,
+    "presion_media": 0.0306,
+    "vibracion_max": 0.0247,
+    "presion_min": 0.0152,
+    "vibracion_min": 0.0028,
+    "temperatura_min": 0.0022,
+    "rpm_max": 0.0022,
+    "presion_max": 0.0009
+  }
+}
