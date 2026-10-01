@@ -52,7 +52,7 @@ Diseñamos y construimos un **prototipo funcional de mantenimiento predictivo** 
 Resultados principales:
 
 - **El modelo avisó las 25 fallas del conjunto de prueba antes de que empezaran, con ~1 minuto de anticipación (56 s en promedio)**, y una exactitud de clasificación del **98.4 %**.
-- En vivo, el estado predicho coincidió con el real en el **98.6 %** de los casos, con falsas alarmas en solo el **0.6 %** de los momentos normales.
+- En vivo, el estado predicho coincidió con el real en el **99.3 %** de los casos, con falsas alarmas en solo el **0.5 %** de los momentos normales.
 - El pipeline **no pierde ni duplica datos** ante caídas de Kafka, InfluxDB o HDFS. Lo verificamos comparando mensaje a mensaje.
 - Guardar el histórico en **Parquet ocupa ~19 veces menos** que el JSON crudo.
 
@@ -412,15 +412,15 @@ Sin haber visto nunca una falla, el detector reconoce **todas**. La degradación
 
 ### En vivo
 
-Durante 10 minutos de funcionamiento real (625 predicciones):
+Durante 10 minutos de funcionamiento real con el modelo entrenado (610 predicciones):
 
 | Estado real | Alerta activada |
 |---|---|
-| Degradación | 97.0 % |
-| Falla | 100 % |
-| Normal | 0.6 % (falsas alarmas) |
+| Degradación | **100 %** (134 de 134) |
+| Falla | **100 %** (40 de 40) |
+| Normal | 0.5 % (2 de 436, falsas alarmas) |
 
-El estado predicho coincidió con el real en el **98.6 %** de las predicciones.
+El estado predicho coincidió con el real en el **99.3 %** de las predicciones.
 
 > **Lección aprendida.** La primera medición en vivo dio solo 64 % de acierto. Antes de dar el modelo por malo, investigamos:
 > 1. Las características del predictor coincidían con las de Spark, así que no era un error de cálculo.
