@@ -1,0 +1,8 @@
+[project]
+name = "spark-procesamiento"
+version = "0.1.0"
+description = "Job de PySpark que limpia el Data Lake y calcula características por ventana"
+requires-python = ">=3.10"
+dependencies = [
+    "pyspark==4.0.1",
+]

@@ -51,6 +51,7 @@ Cada carpeta tiene su propio `README.md` que explica ese componente.
 - [Docker](https://docs.docker.com/get-docker/) con Docker Compose
 - ~8 GB de RAM libres para levantar todo el stack (Kafka + Hadoop + Spark)
 - [uv](https://docs.astral.sh/uv/getting-started/installation/) (solo para correr los scripts de Python fuera de Docker; `uv` también instala Python si hace falta)
+- Java 17 o 21 (solo para correr Spark fuera de Docker)
 
 ## Cómo ejecutarlo
 
@@ -87,6 +88,7 @@ docker compose exec kafka /opt/kafka/bin/kafka-console-consumer.sh \
 | `namenode` | 9870 | HDFS: índice de archivos del Data Lake. Web en http://localhost:9870 |
 | `datanode` | 9864 | HDFS: guarda los bloques de datos |
 | `consumidor-hdfs` | – | Guarda el histórico crudo de Kafka en HDFS |
+| `spark` (bajo demanda) | 4040 | Procesa el Data Lake. Se ejecuta con `docker compose run --rm spark` |
 | `node-red` (opcional) | 1880 | Simulador visual. Se levanta con `docker compose --profile nodered up -d` |
 
 Cada PR va agregando sus servicios a esta tabla.
@@ -100,7 +102,7 @@ El avance se lleva en el issue #1. Cada componente se entrega en un PR aparte:
 - [x] PR 2 – Transferencia a Kafka
 - [x] PR 3 – Almacenamiento en InfluxDB
 - [x] PR 4 – Data Lake en HDFS
-- [ ] PR 5 – Procesamiento con Spark
+- [x] PR 5 – Procesamiento con Spark
 - [ ] PR 6 – Modelo predictivo con Scikit-learn
 - [ ] PR 7 – Dashboard en Grafana
 - [ ] PR 8 – Informe técnico y documentación final
