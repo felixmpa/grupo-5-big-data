@@ -84,6 +84,9 @@ docker compose exec kafka /opt/kafka/bin/kafka-console-consumer.sh \
 | `puente-mqtt-kafka` | – | Reenvía las lecturas de MQTT a Kafka |
 | `influxdb` | 8086 | Base de datos de series de tiempo. Web en http://localhost:8086 (usuario `admin` / `admin12345`) |
 | `consumidor-influxdb` | – | Guarda las lecturas de Kafka en InfluxDB |
+| `namenode` | 9870 | HDFS: índice de archivos del Data Lake. Web en http://localhost:9870 |
+| `datanode` | 9864 | HDFS: guarda los bloques de datos |
+| `consumidor-hdfs` | – | Guarda el histórico crudo de Kafka en HDFS |
 | `node-red` (opcional) | 1880 | Simulador visual. Se levanta con `docker compose --profile nodered up -d` |
 
 Cada PR va agregando sus servicios a esta tabla.
@@ -96,7 +99,7 @@ El avance se lleva en el issue #1. Cada componente se entrega en un PR aparte:
 - [x] PR 1 – Simulación de sensores + broker MQTT
 - [x] PR 2 – Transferencia a Kafka
 - [x] PR 3 – Almacenamiento en InfluxDB
-- [ ] PR 4 – Data Lake en HDFS
+- [x] PR 4 – Data Lake en HDFS
 - [ ] PR 5 – Procesamiento con Spark
 - [ ] PR 6 – Modelo predictivo con Scikit-learn
 - [ ] PR 7 – Dashboard en Grafana

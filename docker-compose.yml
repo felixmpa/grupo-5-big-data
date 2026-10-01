@@ -2,6 +2,19 @@
 # Cada PR agrega aquí los servicios de su componente.
 name: iot-bigdata
 
+# Configuración de Hadoop compartida por namenode y datanode.
+# La imagen oficial convierte cada variable en una propiedad del XML:
+# CORE-SITE.XML_fs.defaultFS -> <property>fs.defaultFS</property> en core-site.xml
+x-hadoop-config: &hadoop-config
+  CORE-SITE.XML_fs.defaultFS: hdfs://namenode:8020
+  HDFS-SITE.XML_dfs.namenode.rpc-address: namenode:8020
+  HDFS-SITE.XML_dfs.namenode.name.dir: /data/namenode
+  HDFS-SITE.XML_dfs.datanode.data.dir: /data/datanode
+  # Un solo datanode: no hay dónde guardar copias extra.
+  HDFS-SITE.XML_dfs.replication: "1"
+  # Prototipo: sin control de permisos para que Spark escriba sin configurar usuarios.
+  HDFS-SITE.XML_dfs.permissions.enabled: "false"
+
 services:
   # --- PR 1: sensores + broker MQTT ---
   mosquitto:
@@ -133,9 +146,60 @@ services:
         condition: service_healthy
     restart: unless-stopped
 
+  # --- PR 4: Data Lake en HDFS ---
+  namenode:
+    image: apache/hadoop:3.4.2
+    hostname: namenode
+    command: ["hdfs", "namenode"]
+    ports:
+      - "9870:9870"   # web de HDFS: http://localhost:9870
+    environment:
+      <<: *hadoop-config
+      # La primera vez formatea el sistema de archivos (si la carpeta no existe).
+      ENSURE_NAMENODE_DIR: /data/namenode
+    volumes:
+      - namenode-data:/data
+    healthcheck:
+      test: ["CMD-SHELL", "hdfs dfsadmin -safemode get | grep -q OFF"]
+      interval: 5s
+      timeout: 10s
+      retries: 30
+
+  datanode:
+    image: apache/hadoop:3.4.2
+    hostname: datanode
+    command: ["hdfs", "datanode"]
+    ports:
+      - "9864:9864"   # WebHDFS escribe los datos directamente en el datanode
+    environment:
+      <<: *hadoop-config
+    volumes:
+      - datanode-data:/data
+    depends_on:
+      - namenode
+
+  consumidor-hdfs:
+    build: ./consumidor-hdfs
+    environment:
+      KAFKA_BOOTSTRAP: kafka:9092
+      KAFKA_TOPIC: sensores
+      HDFS_URL: http://namenode:9870
+      HDFS_RUTA: /datalake/crudo/sensores
+      SEGUNDOS_POR_ARCHIVO: 60
+    depends_on:
+      kafka-init:
+        condition: service_completed_successfully
+      namenode:
+        condition: service_healthy
+      datanode:
+        condition: service_started
+    restart: unless-stopped
+
 volumes:
   kafka-data:
   influxdb-data:
+  namenode-data:
+  datanode-data:
 
 # Red compartida para que los servicios se encuentren por nombre
 # (por ejemplo: mosquitto, kafka, influxdb).
