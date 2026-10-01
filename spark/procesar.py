@@ -113,6 +113,10 @@ def main():
         # Conectarse al datanode por su nombre ("datanode") y no por su IP
         # interna de Docker. Necesario para correr este script fuera de Docker.
         .config("spark.hadoop.dfs.client.use.datanode.hostname", "true")
+        # Un solo datanode: guardar 1 copia de cada bloque. Sin esto Spark usa
+        # el valor por defecto de Hadoop (3) y HDFS marca los bloques como
+        # "under-replicated".
+        .config("spark.hadoop.dfs.replication", "1")
         # Pocos datos: 8 particiones internas alcanzan (por defecto son 200).
         # En un clúster real con muchos datos se sube este número.
         .config("spark.sql.shuffle.partitions", "8")
