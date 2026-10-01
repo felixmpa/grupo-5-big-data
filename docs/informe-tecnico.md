@@ -4,9 +4,9 @@
 |---|---|
 | **Proyecto** | Sistema de captura, almacenamiento y análisis predictivo de sensores IoT en una fábrica |
 | **Grupo** | 5 |
-| **Integrantes** | {COMPLETAR: nombre y matrícula de cada integrante} |
-| **Asignatura / docente** | {COMPLETAR} |
-| **Fecha** | {COMPLETAR} |
+| **Integrantes** | Felix M. Pérez Abreu, Francisco Saint-Hilaire Estévez, Génesis Peña Jiménez, Marcella Dicarlo Quiñones, Máximo Martínez, Miguel A. Lalondriz Rincón, Nauer Estrella |
+| **Asignatura / docente** | Big Data, Computación en la Nube y Ecosistema de Internet (INF-8268-C1) |
+| **Fecha** | 01 Octubre 2026 |
 | **Repositorio** | https://github.com/felixmpa/grupo-5-big-data |
 
 ---
