@@ -66,7 +66,7 @@ Con 2 horas de historia generadas con `--semilla 42` desde volúmenes vacíos (1
 
 **Detector de anomalías**: marca como anomalía el **3.8 %** de las ventanas normales, el **63 %** de las de degradación y el **100 %** de las de falla. Sin haber visto nunca una falla, las reconoce todas. La degradación temprana le cuesta más, porque al principio se parece mucho a lo normal.
 
-**En vivo** (10 minutos, 625 predicciones): el estado predicho coincidió con el real en el **98.6 %**. Hubo alerta en el 97 % de las degradaciones y en el 100 % de las fallas, y solo en el 0.6 % de los momentos normales.
+**En vivo** (10 minutos, 610 predicciones): el estado predicho coincidió con el real en el **99.3 %**. Hubo alerta en el **100 %** de las degradaciones (134/134) y de las fallas (40/40), y solo en el **0.5 %** de los momentos normales (2/436).
 
 ![Riesgo vs. estado real](resultados/linea_de_tiempo.png)
 
