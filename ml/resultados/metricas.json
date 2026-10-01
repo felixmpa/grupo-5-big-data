@@ -1,28 +1,28 @@
 {
   "ventanas": {
-    "total": 1225,
-    "entrenamiento": 915,
-    "prueba": 310
+    "total": 1228,
+    "entrenamiento": 920,
+    "prueba": 308
   },
   "clasificador": {
-    "exactitud": 0.9741935483870968,
+    "exactitud": 0.9837662337662337,
     "normal": {
-      "precision": 0.995,
-      "recall": 0.972,
-      "f1-score": 0.984,
-      "support": 215.0
+      "precision": 0.99,
+      "recall": 0.986,
+      "f1-score": 0.988,
+      "support": 208.0
     },
     "degradacion": {
-      "precision": 0.959,
-      "recall": 0.986,
-      "f1-score": 0.972,
-      "support": 71.0
+      "precision": 0.986,
+      "recall": 0.973,
+      "f1-score": 0.98,
+      "support": 75.0
     },
     "falla": {
-      "precision": 0.852,
-      "recall": 0.958,
-      "f1-score": 0.902,
-      "support": 24.0
+      "precision": 0.926,
+      "recall": 1.0,
+      "f1-score": 0.962,
+      "support": 25.0
     },
     "matriz_confusion": {
       "etiquetas": [
@@ -32,58 +32,62 @@
       ],
       "valores": [
         [
-          209,
-          2,
-          4
+          205,
+          1,
+          2
         ],
         [
-          1,
-          70,
+          2,
+          73,
           0
         ],
         [
           0,
-          1,
-          23
+          0,
+          25
         ]
       ]
     }
   },
   "alertas": {
     "umbral_riesgo": 0.5,
-    "deteccion_ventanas_con_problema": 0.989,
-    "falsas_alarmas_en_normales": 0.028,
-    "fallas_en_prueba": 24,
-    "fallas_avisadas_antes": 24,
-    "anticipacion_promedio_segundos": 65.0
+    "deteccion_ventanas_con_problema": 0.98,
+    "falsas_alarmas_en_normales": 0.019,
+    "fallas_en_prueba": 25,
+    "fallas_avisadas_antes": 25,
+    "anticipacion_promedio_segundos": 56.4,
+    "anticipacion_por_falla": {
+      "30 s": 3,
+      "60 s": 22
+    }
   },
   "detector_anomalias": {
     "proporcion_marcada_por_estado": {
-      "normal": 0.056,
-      "degradacion": 0.563,
+      "normal": 0.038,
+      "degradacion": 0.627,
       "falla": 1.0
     }
   },
   "importancia_caracteristicas": {
-    "rpm_tendencia": 0.1587,
-    "temperatura_tendencia": 0.1271,
-    "presion_tendencia": 0.1027,
-    "vibracion_media": 0.0697,
-    "temperatura_media": 0.0675,
-    "temperatura_desv": 0.0673,
-    "temperatura_max": 0.0667,
-    "vibracion_desv": 0.0582,
-    "rpm_desv": 0.0551,
-    "rpm_media": 0.052,
-    "presion_desv": 0.0449,
-    "rpm_min": 0.0339,
-    "vibracion_tendencia": 0.0303,
-    "vibracion_max": 0.0278,
-    "presion_media": 0.0154,
-    "presion_min": 0.0149,
-    "vibracion_min": 0.0037,
-    "presion_max": 0.0022,
-    "rpm_max": 0.0011,
-    "temperatura_min": 0.0009
+    "temperatura_tendencia": 0.1388,
+    "presion_tendencia": 0.1221,
+    "rpm_tendencia": 0.1192,
+    "temperatura_max": 0.0705,
+    "vibracion_media": 0.0668,
+    "vibracion_desv": 0.0638,
+    "temperatura_media": 0.0606,
+    "temperatura_desv": 0.0597,
+    "rpm_desv": 0.0495,
+    "rpm_media": 0.046,
+    "vibracion_tendencia": 0.0438,
+    "presion_desv": 0.0425,
+    "rpm_min": 0.0382,
+    "presion_media": 0.0306,
+    "vibracion_max": 0.0247,
+    "presion_min": 0.0152,
+    "vibracion_min": 0.0028,
+    "temperatura_min": 0.0022,
+    "rpm_max": 0.0022,
+    "presion_max": 0.0009
   }
 }

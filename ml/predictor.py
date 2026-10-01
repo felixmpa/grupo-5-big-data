@@ -46,12 +46,16 @@ def leer_mensaje(valor):
     try:
         lectura = json.loads(valor)
         maquina = str(lectura["maquina_id"])
-        maquina.encode("utf-8")  # texto con caracteres inválidos -> ValueError
+        estado = str(lectura.get("estado", ""))
+        # Los dos textos se escriben en InfluxDB: si tienen caracteres que no
+        # se pueden codificar (por ejemplo "\ud800") -> ValueError y se descarta.
+        maquina.encode("utf-8")
+        estado.encode("utf-8")
         momento = datetime.fromisoformat(lectura["timestamp"].replace("Z", "+00:00"))
         valores = {s: float(lectura[s]) for s in SENSORES}
         if not all(RANGOS[s][0] <= v <= RANGOS[s][1] for s, v in valores.items()):
             raise ValueError("valor fuera de rango")
-        return maquina, momento.timestamp(), valores, str(lectura.get("estado", ""))
+        return maquina, momento.timestamp(), valores, estado
     except (ValueError, KeyError, TypeError, AttributeError):
         print(f"Mensaje inválido, se descarta: {valor[:100]!r}")
         return None

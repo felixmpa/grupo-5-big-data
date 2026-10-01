@@ -43,23 +43,28 @@ docker compose run --rm sensores python generar_historico.py --horas 2 --semilla
 
 ## Resultados
 
-Con 2 horas de historia (1225 ventanas; 915 para entrenar y 310 para evaluar):
+Con 2 horas de historia generadas con `--semilla 42` desde volúmenes vacíos (1228 ventanas; 920 para entrenar y 308 para evaluar). Siguiendo los pasos de [Cómo ejecutarlo](#cómo-ejecutarlo) se obtienen números muy parecidos. No son idénticos porque las lecturas en vivo que se mezclan con la historia no usan la semilla.
 
 | Clasificador | Precisión | Recall | Ventanas de prueba |
 |---|---|---|---|
-| normal | 99.5 % | 97.2 % | 215 |
-| degradación | 95.9 % | 98.6 % | 71 |
-| falla | 85.2 % | 95.8 % | 24 |
-| **Exactitud total** | | **97.4 %** | 310 |
+| normal | 99.0 % | 98.6 % | 208 |
+| degradación | 98.6 % | 97.3 % | 75 |
+| falla | 92.6 % | 100 % | 25 |
+| **Exactitud total** | | **98.4 %** | 308 |
 
 - **Precisión**: de las veces que dijo "falla", cuántas eran falla.
 - **Recall**: de las fallas reales, cuántas detectó.
 
 **Alertas** (riesgo ≥ 50 %):
-- Detectan el **98.9 %** de las ventanas con problema, con falsas alarmas en el **2.8 %** de las normales.
-- **Las 24 fallas de la prueba se avisaron antes de empezar**, con **65 s de anticipación promedio**.
+- Detectan el **98 %** de las ventanas con problema, con falsas alarmas en el **1.9 %** de las normales.
+- **Las 25 fallas de la prueba se avisaron antes de empezar**, con **56 s de anticipación promedio**: 22 fallas con 60 s y 3 con 30 s.
 
-**Detector de anomalías**: marca como anomalía el **5.6 %** de las ventanas normales, el **56 %** de las de degradación y el **100 %** de las de falla. Sin haber visto nunca una falla, las reconoce todas. La degradación temprana le cuesta más, porque al principio se parece mucho a lo normal.
+¿Cómo se mide la anticipación? Por cada falla, se cuenta el tiempo entre la **primera alerta del tramo de degradación inmediatamente anterior** y el inicio de la falla.
+- Como se mide por ventanas, el resultado es **múltiplo de 30 s**: "56 s" quiere decir "unas 2 ventanas antes", no una precisión al segundo.
+- Una alerta que llega recién en la ventana en que empieza la falla cuenta como **0 s**, es decir, **no** como aviso anticipado.
+- Si una máquina falla dos veces seguidas, la alerta de la primera falla no se atribuye a la segunda.
+
+**Detector de anomalías**: marca como anomalía el **3.8 %** de las ventanas normales, el **63 %** de las de degradación y el **100 %** de las de falla. Sin haber visto nunca una falla, las reconoce todas. La degradación temprana le cuesta más, porque al principio se parece mucho a lo normal.
 
 **En vivo** (10 minutos, 625 predicciones): el estado predicho coincidió con el real en el **98.6 %**. Hubo alerta en el 97 % de las degradaciones y en el 100 % de las fallas, y solo en el 0.6 % de los momentos normales.
 
@@ -79,7 +84,7 @@ Todas las métricas están en `resultados/metricas.json`.
 
 `predictor.py`:
 1. Lee las lecturas de Kafka a medida que llegan y guarda **los últimos 30 s de cada máquina**.
-2. Cada **5 s** calcula las mismas 20 características que Spark, con `caracteristicas.py`. Se verificó con 200 ventanas que dan los mismos valores (diferencia < 0.001 %).
+2. Cada **5 s** calcula las mismas 20 características que Spark, con `caracteristicas.py`. Lo verificamos recalculando **las 1230 ventanas** de Spark desde las lecturas limpias: coinciden todos los conteos y la diferencia absoluta máxima es **1e-7**, que es ruido de coma flotante.
 3. Aplica los dos modelos y escribe en InfluxDB, measurement **`predicciones`**:
 
 | Campo | Qué es |
@@ -120,6 +125,8 @@ docker compose exec influxdb influx query --org grupo5 --token token-demo-grupo5
 ```
 
 Para reentrenar con más datos se repiten los pasos 3 y 4, y después `docker compose restart predictor`.
+
+> **Ojo al reentrenar:** `entrenar` sobrescribe `ml/resultados/` (`metricas.json` y las 3 imágenes), que están en el repositorio como resultado de referencia. Si no se quiere guardar la nueva corrida, se descarta con `git checkout -- ml/resultados/`.
 
 ### Correrlo local con uv
 
