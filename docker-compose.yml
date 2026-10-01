@@ -31,6 +31,72 @@ services:
     depends_on:
       - mosquitto
 
+  # --- PR 2: Kafka + puente MQTT -> Kafka ---
+  kafka:
+    image: apache/kafka:4.2.0
+    ports:
+      - "9094:9094"   # para conectarse desde fuera de Docker (localhost:9094)
+    environment:
+      # Un solo nodo que hace de broker y de controller (modo KRaft, sin Zookeeper).
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      # INTERNA: para los contenedores (kafka:9092)
+      # EXTERNA: para scripts locales con uv (localhost:9094)
+      KAFKA_LISTENERS: INTERNA://:9092,CONTROLLER://:9093,EXTERNA://:9094
+      KAFKA_ADVERTISED_LISTENERS: INTERNA://kafka:9092,EXTERNA://localhost:9094
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: INTERNA:PLAINTEXT,CONTROLLER:PLAINTEXT,EXTERNA:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: INTERNA
+      # Con un solo nodo no se puede replicar.
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      KAFKA_HEAP_OPTS: -Xms512m -Xmx512m
+      KAFKA_LOG_DIRS: /var/lib/kafka/data
+    volumes:
+      # Los mensajes se guardan en un volumen: sobreviven a "docker compose down".
+      # Para borrarlos: docker compose down -v
+      - kafka-data:/var/lib/kafka/data
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/kafka/bin/kafka-broker-api-versions.sh --bootstrap-server localhost:9092 > /dev/null 2>&1"]
+      interval: 5s
+      timeout: 10s
+      retries: 20
+
+  # Crea el topic "sensores" una vez que Kafka está listo y termina.
+  kafka-init:
+    image: apache/kafka:4.2.0
+    depends_on:
+      kafka:
+        condition: service_healthy
+    command:
+      - /opt/kafka/bin/kafka-topics.sh
+      - --bootstrap-server=kafka:9092
+      - --create
+      - --if-not-exists
+      - --topic=sensores
+      - --partitions=3
+      - --replication-factor=1
+      - --config=retention.ms=604800000   # guarda 7 días
+
+  puente-mqtt-kafka:
+    build: ./puente-mqtt-kafka
+    environment:
+      MQTT_HOST: mosquitto
+      KAFKA_BOOTSTRAP: kafka:9092
+      KAFKA_TOPIC: sensores
+    depends_on:
+      mosquitto:
+        condition: service_started
+      kafka-init:
+        condition: service_completed_successfully
+    restart: unless-stopped
+
+volumes:
+  kafka-data:
+
 # Red compartida para que los servicios se encuentren por nombre
 # (por ejemplo: mosquitto, kafka, influxdb).
 networks:

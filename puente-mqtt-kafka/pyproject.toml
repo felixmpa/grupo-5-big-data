@@ -1,0 +1,9 @@
+[project]
+name = "puente-mqtt-kafka"
+version = "0.1.0"
+description = "Reenvía las lecturas de MQTT al topic sensores de Kafka"
+requires-python = ">=3.10"
+dependencies = [
+    "confluent-kafka>=2.6,<3",
+    "paho-mqtt>=2.1,<3",
+]
