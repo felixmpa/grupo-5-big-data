@@ -21,7 +21,8 @@ from collections import defaultdict
 from datetime import datetime, timezone
 
 from confluent_kafka import Consumer, KafkaException
-from hdfs import InsecureClient
+from hdfs import HdfsError, InsecureClient
+from requests import RequestException
 
 KAFKA_BOOTSTRAP = os.getenv("KAFKA_BOOTSTRAP", "localhost:9094")
 KAFKA_TOPIC = os.getenv("KAFKA_TOPIC", "sensores")
@@ -52,7 +53,15 @@ def a_linea(msg):
     fecha = datetime.fromtimestamp(ms / 1000, tz=timezone.utc).strftime("%Y-%m-%d")
     lectura["_kafka_particion"] = msg.partition()
     lectura["_kafka_offset"] = msg.offset()
-    return fecha, json.dumps(lectura, ensure_ascii=False)
+    linea = json.dumps(lectura, ensure_ascii=False)
+    try:
+        # Un texto con caracteres inválidos (por ejemplo "\ud800") es JSON válido
+        # pero no se puede guardar en UTF-8. Lo detectamos aquí, no al escribir.
+        linea.encode("utf-8")
+    except UnicodeEncodeError:
+        print(f"Mensaje con texto inválido, se descarta: {msg.value()[:100]!r}")
+        return None
+    return fecha, linea
 
 
 def escribir(hdfs, lineas_por_fecha):
@@ -69,7 +78,9 @@ def escribir(hdfs, lineas_por_fecha):
                 hdfs.rename(temporal, f"{carpeta}/{nombre}")
                 print(f"Guardado {carpeta}/{nombre} ({len(lineas)} lecturas)")
                 break
-            except Exception as error:  # noqa: BLE001 - cualquier fallo de red o de HDFS
+            # Solo se reintenta ante fallos de red o de HDFS. Un error en los datos
+            # no se arregla reintentando: esos mensajes se descartan en a_linea().
+            except (HdfsError, RequestException) as error:
                 motivo = str(error).splitlines()[0]  # sin la traza completa de Java
                 if not corriendo:
                     print(f"No se pudo escribir en HDFS al detenerse ({motivo}).")

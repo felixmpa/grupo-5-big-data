@@ -54,9 +54,9 @@ Guardar los datos crudos permite **reprocesarlos** más adelante con otra lógic
 2. Las escribe en HDFS con un **nombre oculto** (`.sensores-….jsonl.tmp`) y al terminar lo **renombra**. Spark ignora los archivos que empiezan con `.`, así que nunca lee un archivo a medio escribir.
 3. **Recién entonces** confirma a Kafka que las procesó.
 
-- **Si HDFS no responde** (por ejemplo, en *safe mode* después de reiniciar), reintenta cada 5 s sin confirmar. Cuando vuelve, guarda todo lo acumulado.
+- **Si HDFS no responde** (por ejemplo, en *safe mode* después de reiniciar), reintenta cada 5 s sin confirmar. Cuando vuelve, guarda todo lo acumulado. Solo se reintenta ante fallos de **red o de HDFS**: un error en los datos no se arregla reintentando, por eso esos mensajes se descartan antes.
 - **Al detenerse** (`Ctrl+C` o `docker compose stop`), guarda lo pendiente antes de salir.
-- **Mensaje que no es un objeto JSON**: se descarta y queda en el log. Los objetos JSON se guardan **tal cual**, aunque traigan valores raros. Validarlos es tarea de Spark: esa es la idea de una zona *cruda*.
+- **Mensaje que no es un objeto JSON o con texto que no se puede guardar en UTF-8** (por ejemplo `"\ud800"`): se descarta y queda en el log. Los objetos JSON se guardan **tal cual**, aunque traigan valores raros. Validarlos es tarea de Spark: esa es la idea de una zona *cruda*.
 - **Duplicados**: si el consumidor se cae entre el paso 2 y el 3, al volver reescribe ese lote. El par **(`_kafka_particion`, `_kafka_offset`) identifica cada lectura de forma única**, así que Spark puede eliminar duplicados. Esta garantía se llama *at-least-once*: ninguna lectura se pierde, pero alguna puede repetirse.
 
 ## Configuración
