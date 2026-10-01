@@ -19,6 +19,8 @@ from datetime import datetime
 from confluent_kafka import Consumer, KafkaException
 from influxdb_client import InfluxDBClient, Point, WritePrecision
 from influxdb_client.client.write_api import SYNCHRONOUS
+from influxdb_client.rest import ApiException
+from urllib3.exceptions import HTTPError
 
 KAFKA_BOOTSTRAP = os.getenv("KAFKA_BOOTSTRAP", "localhost:9094")
 KAFKA_TOPIC = os.getenv("KAFKA_TOPIC", "sensores")
@@ -44,21 +46,37 @@ def a_punto(valor):
         punto = Point("lecturas").tag("maquina_id", lectura["maquina_id"])
         for campo in CAMPOS:
             punto = punto.field(campo, float(lectura[campo]))
-        return punto.field("estado", str(lectura["estado"])).time(momento, WritePrecision.MS)
+        punto = punto.field("estado", str(lectura["estado"])).time(momento, WritePrecision.MS)
+        # Lo convertimos ya al formato que se envía a InfluxDB. Así cualquier dato
+        # que no se pueda enviar (por ejemplo texto con caracteres inválidos como
+        # "\ud800") se detecta aquí y no al escribir.
+        punto.to_line_protocol().encode("utf-8")
+        return punto
     except (ValueError, KeyError, TypeError, AttributeError):
         print(f"Mensaje inválido, se descarta: {valor[:100]!r}")
         return None
 
 
 def escribir_con_reintentos(escritor, puntos):
-    """Escribe el lote; si InfluxDB no responde, espera y reintenta."""
+    """Escribe el lote; si InfluxDB no responde, espera y reintenta.
+
+    Solo se reintenta ante fallos de red o del servidor. Un error en los datos
+    no se arregla reintentando: esos mensajes ya se descartaron en a_punto().
+    """
     while corriendo:
         try:
             escritor.write(bucket=INFLUX_BUCKET, record=puntos)
             return True
-        except Exception as error:  # noqa: BLE001 - cualquier fallo de red o de InfluxDB
-            print(f"No se pudo escribir en InfluxDB ({error}). Reintentando en 5 s...")
-            time.sleep(5)
+        except ApiException as error:
+            if error.status in (400, 422):
+                # InfluxDB rechazó los datos (los válidos del lote sí se guardan).
+                print(f"InfluxDB rechazó parte del lote: {error.body}")
+                return True
+            motivo = f"HTTP {error.status} {error.reason}"
+        except (HTTPError, OSError) as error:
+            motivo = error
+        print(f"No se pudo escribir en InfluxDB ({motivo}). Reintentando en 5 s...")
+        time.sleep(5)
     return False
 
 
